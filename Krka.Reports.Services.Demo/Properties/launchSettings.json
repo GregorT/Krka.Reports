@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Krka.Reports.Services.Demo": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

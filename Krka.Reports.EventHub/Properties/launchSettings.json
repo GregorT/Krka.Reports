@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Krka.Reports.EventHub": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

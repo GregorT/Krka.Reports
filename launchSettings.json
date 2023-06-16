@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "krka.reports.apigateway": "StartDebugging",
+        "krka.reports.eventhub": "StartDebugging"
+      }
+    }
+  }
+}
