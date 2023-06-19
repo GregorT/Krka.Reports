@@ -1,7 +1,11 @@
+using Krka.Reports.ApiGateway.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddSingleton<HubService>();
+//builder.Services.AddHostedService<HubService>(provider => provider.GetService<HubService>());
 builder.Services.AddOpenApiDocument(document =>
 {
     document.Title = "Krka reporting api gateway";

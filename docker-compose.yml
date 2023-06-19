@@ -1,9 +1,9 @@
 version: '3.4'
 
 services:
-  krka.reports.apigateway:
+  apigateway:
     restart: always
-    container_name: krka.reports.apigateway
+    container_name: apigateway
     image: ${DOCKER_REGISTRY-}krkareportsapigateway
     environment:
         - TZ=${TZ}
@@ -11,12 +11,14 @@ services:
       context: .
       dockerfile: Krka.Reports.ApiGateway/Dockerfile
     depends_on:
-        - krka.reports.eventhub
+        - eventhub
     ports:
         - "10000:443"
-  krka.reports.eventhub:
+    networks:
+        - backend
+  eventhub:
     restart: always
-    container_name: krka.reports.eventhub
+    container_name: eventhub
     image: ${DOCKER_REGISTRY-}krkareportseventhub
     build:
       context: .
@@ -24,12 +26,22 @@ services:
     ports:
         - "11000:11000"
         - "12000:12000"
-  krka.reports.services.demo:
+    networks:
+        - backend
+  servicesdemo:
     restart: always
-    container_name: krka.reports.services.demo
+    container_name: servicesdemo
     image: ${DOCKER_REGISTRY-}krkareportsservicesdemo
     build:
       context: .
       dockerfile: Krka.Reports.Services.Demo/Dockerfile
     depends_on:
-        - krka.reports.eventhub
+        - eventhub
+    networks:
+        - backend
+networks:
+  backend:
+    name: krkareports
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: krkareports
