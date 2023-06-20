@@ -5,13 +5,27 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443
+      - RABBIT=rabbitmq
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+  minapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443
+      - RABBIT=rabbitmq
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
   eventhub:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - RABBIT=rabbitmq
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+  servicesdemo:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RABBIT=rabbitmq
   

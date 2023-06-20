@@ -1,42 +1,40 @@
-﻿using Krka.Reports.Services.Demo.Logic;
-using NetMQ;
-using NetMQ.Sockets;
+﻿using System.Text;
+using System.Text.Json;
+using Krka.Reports.Services.Demo.Logic;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
-//var _address = "eventhub";
-var _address = "127.0.0.1";
-
-Console.WriteLine("Subsrciber starting...");
-var tasks = new List<Task>();
-var topic = "Codelists.Demo.Request";
-
-var pubSocket = new PublisherSocket();
-pubSocket.Connect($"tcp://{_address}:11000");
-
-var subSocket = new SubscriberSocket();
-subSocket.Connect($"tcp://{_address}:12000");
-subSocket.Options.ReceiveHighWatermark = 0;
-subSocket.Subscribe(topic);
-Console.WriteLine("Subscriber socket connected. waiting...");
-while (true)
+var rabbithost = Environment.GetEnvironmentVariable("RABBIT");
+if (rabbithost == null || string.IsNullOrWhiteSpace(rabbithost))
 {
-    var topicReceived = subSocket.ReceiveFrameString();
-    var keyReceived = subSocket.ReceiveFrameString();
-    var messageReceived = subSocket.ReceiveFrameString();
-    Console.WriteLine($"received: {keyReceived} - {messageReceived}");
-    if (messageReceived.Equals("list"))
-    {
-        var task = new Task(async () => await new DemoLogic().SendList(pubSocket, keyReceived));
-        tasks.Add(task);
-        task.Start();
-    }
-
-    if (messageReceived.StartsWith("search"))
-    {
-        var task = new Task(async () => await new DemoLogic().SendList(pubSocket, keyReceived));
-        tasks.Add(task);
-        task.Start();
-    }
+    Console.WriteLine("Environment variable RABBIT is missing or not set");
+    return;
 }
 
-subSocket.Close();
-subSocket.Dispose();
+Console.WriteLine("Subsrciber starting...");
+var factory = new ConnectionFactory {HostName = rabbithost, UserName = "svcdemo", Password = "demo123"};
+var connection = factory.CreateConnection();
+var channel = connection.CreateModel();
+var pubchannel = connection.CreateModel();
+channel.QueueDeclare("Codelists.Demo.Request", exclusive: false);
+var consumer = new EventingBasicConsumer(channel);
+consumer.Received += (model, eventArgs) =>
+{
+    var body = eventArgs.Body.ToArray();
+    var message = Encoding.UTF8.GetString(body);
+    Console.WriteLine($"received message={message}");
+    channel.BasicAck(eventArgs.DeliveryTag, false);
+    var data = JsonSerializer.Deserialize<Data>(message);
+    if (data != null)
+    {
+        var key = data.Key;
+        if (data.Command.Equals("list", StringComparison.InvariantCultureIgnoreCase)) Task.Run(async () => await new DemoLogic().SendList(pubchannel, key));
+    }
+};
+channel.BasicConsume(queue: "Codelists.Demo.Request", autoAck: false, consumer: consumer);
+Console.WriteLine("Subsrciber started.");
+var manualResetEvent = new ManualResetEvent(false);
+manualResetEvent.WaitOne();
+
+public record Data(string Key, string Command, string? Payload);
+public record Config(string RabbitHost);

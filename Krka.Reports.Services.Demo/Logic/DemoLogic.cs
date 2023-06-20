@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using NetMQ;
-using NetMQ.Sockets;
+﻿using RabbitMQ.Client;
 
 namespace Krka.Reports.Services.Demo.Logic;
 
@@ -25,19 +23,11 @@ internal class DemoLogic
 
     #region Public
 
-    public async Task SendList(PublisherSocket pubSocket, string key)
+    public async Task SendList(IModel channel, string key)
     {
-        var message = JsonSerializer.Serialize(_sifrant);
+        var connector = new RabbitConnector();
+        await connector.Send(channel, $"Codelists.Demo.Response.{key}", _sifrant);
         Console.WriteLine("sending list");
-        pubSocket.SendMoreFrame($"Codelists.Demo.Response.{key}").SendFrame(message);
-    }
-
-    public async Task SendSearch(PublisherSocket publisher, string key, string search)
-    {
-        var list = _sifrant.Where(p => p.Firstname.Contains(search, StringComparison.InvariantCultureIgnoreCase) || p.Lastname.Contains(search, StringComparison.InvariantCultureIgnoreCase)).ToList();
-        var message = JsonSerializer.Serialize(_sifrant);
-        Console.WriteLine("sending list");
-        publisher.SendMoreFrame($"Codelists.Demo.Response.{key}").SendFrame(message);
     }
 
     #endregion

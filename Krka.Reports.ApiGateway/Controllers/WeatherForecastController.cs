@@ -12,8 +12,8 @@ public class SinhController : ControllerBase, IDisposable
 {
     #region Ctor
 
-    //private readonly string _address = "eventhub";
-    private readonly string _address = "127.0.0.1";
+    private readonly string _address = "eventhub";
+    //private readonly string _address = "127.0.0.1";
 
     public SinhController()
     {
@@ -67,6 +67,8 @@ public class SinhController : ControllerBase, IDisposable
     [HttpPost]
     public async Task<IEnumerable<EnSifrant>?> Test(string command)
     {
+        _publisher.Connect($"tcp://{_address}:11000");
+        _subscriber.Connect($"tcp://{_address}:12000");
         try
         {
             var key = Guid.NewGuid().ToString();

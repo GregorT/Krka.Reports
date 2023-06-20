@@ -1,7 +1,7 @@
 ﻿using NetMQ;
 using NetMQ.Sockets;
-//var _address = "eventhub";
-var _address = "127.0.0.1";
+var _address = "eventhub";
+//var _address = "127.0.0.1";
 
 Console.WriteLine("EventHub starting...");
 using var incomingSocket = new XSubscriberSocket();
