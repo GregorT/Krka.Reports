@@ -29,7 +29,7 @@ internal class DemoLogic
     {
         var message = JsonSerializer.Serialize(_sifrant);
         Console.WriteLine("sending list");
-        pubSocket.SendMoreFrame($"Codelists.Demo.Response.{key}").SendFrame(message);
+        pubSocket.SendMoreFrame($"Codelists.Demo.Response.{key}").SendMoreFrame(key).SendFrame(message);
     }
 
     public async Task SendSearch(PublisherSocket publisher, string key, string search)
@@ -37,7 +37,7 @@ internal class DemoLogic
         var list = _sifrant.Where(p => p.Firstname.Contains(search, StringComparison.InvariantCultureIgnoreCase) || p.Lastname.Contains(search, StringComparison.InvariantCultureIgnoreCase)).ToList();
         var message = JsonSerializer.Serialize(_sifrant);
         Console.WriteLine("sending list");
-        publisher.SendMoreFrame($"Codelists.Demo.Response.{key}").SendFrame(message);
+        publisher.SendMoreFrame($"Codelists.Demo.Response.{key}").SendMoreFrame(key).SendFrame(message);
     }
 
     #endregion

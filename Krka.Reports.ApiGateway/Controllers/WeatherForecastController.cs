@@ -1,42 +1,20 @@
 using System.Text.Json;
 using Krka.Reports.ApiGateway.Services;
 using Microsoft.AspNetCore.Mvc;
-using NetMQ;
 using NetMQ.Sockets;
 
 namespace Krka.Reports.ApiGateway.Controllers;
 
 [ApiController]
 [Route("sinh")]
-public class SinhController : ControllerBase, IDisposable
+public class SinhController : ControllerBase
 {
     #region Ctor
 
-    //private readonly string _address = "eventhub";
-    private readonly string _address = "127.0.0.1";
-
-    public SinhController()
-    {
-        _publisher = new PublisherSocket();
-        _publisher.Connect($"tcp://{_address}:11000");
-        _subscriber = new SubscriberSocket();
-        _subscriber.Connect($"tcp://{_address}:12000");
-    }
-
-    private readonly PublisherSocket _publisher;
-    private readonly SubscriberSocket _subscriber;
 
     #endregion
 
     #region Public
-
-    public void Dispose()
-    {
-        _publisher.Disconnect($"tcp://{_address}:11000");
-        _publisher.Dispose();
-        _subscriber.Disconnect($"tcp://{_address}:12000");
-        _subscriber.Dispose();
-    }
 
     //[HttpGet]
     //public async Task<IEnumerable<EnSifrant>?> Get([FromServices] HubService eventHub)
@@ -65,27 +43,15 @@ public class SinhController : ControllerBase, IDisposable
     //}
 
     [HttpPost]
-    public async Task<IEnumerable<EnSifrant>?> Test(string command)
+    public async Task<IEnumerable<EnSifrant>?> Test([FromServices] HubService hub, string command)
     {
         try
         {
             var key = Guid.NewGuid().ToString();
-            while (!_publisher.TrySignalOK())
-            {
-                Thread.Sleep(100);
-            }
-            _subscriber.Subscribe($"Codelists.Demo.Response.{key}");
-            _publisher.SendMoreFrame("Codelists.Demo.Request").SendMoreFrame(key).SendFrame(command);
-            var result = string.Empty;
-            _subscriber.ReceiveReady += (_, args) =>
-            {
-                var topic = args.Socket.ReceiveFrameString();
-                result = args.Socket.ReceiveFrameString();
-                _subscriber.Unsubscribe($"Codelists.Demo.Response.{key}");
-            };
-            _subscriber.Poll(TimeSpan.FromSeconds(5));
-            if (string.IsNullOrWhiteSpace(result)) return null;
-            var data = JsonSerializer.Deserialize<List<EnSifrant>>(result);
+
+            var result = await hub.SendAndReceive("Codelists.Demo", key, command, null, CancellationToken.None);
+            if (result?.Data == null) return null;
+            var data = JsonSerializer.Deserialize<List<EnSifrant>>(result.Data);
             return data;
         }
         catch (Exception e)

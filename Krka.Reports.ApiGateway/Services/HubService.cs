@@ -1,5 +1,7 @@
 ﻿using NetMQ;
 using NetMQ.Sockets;
+using System.Security.Policy;
+using System.ServiceModel.Channels;
 
 namespace Krka.Reports.ApiGateway.Services;
 
@@ -11,10 +13,10 @@ public class HubService : IHostedService
     {
         #region Properties
 
-        public string? Channel { get; set; }
+        public string Channel { get; set; } = string.Empty;
 
         public string? Data { get; set; }
-        public string? Key { get; set; }
+        public string Key { get; set; } = string.Empty;
 
         #endregion
     }
@@ -30,19 +32,13 @@ public class HubService : IHostedService
 
     public event EventHandler<DataReceivedEventArgs>? DataReceived;
 
-    public Task SendData(string channel, string key, string message)
-    {
-        Publisher.SendMoreFrame(channel).SendMoreFrame(key).SendFrame(message);
-        return Task.CompletedTask;
-    }
-
     public Task StartAsync(CancellationToken cancellationToken)
     {
         Publisher = new PublisherSocket();
         Publisher.Connect(_addressPublisher);
         Subscriber = new SubscriberSocket();
         Subscriber.Connect(_addressSubscriber);
-        Subscribe("Quiet");
+        Subscriber.Subscribe("quiet");
         Task.Run(() => ReceiveData(cancellationToken), cancellationToken);
         return Task.CompletedTask;
     }
@@ -53,18 +49,6 @@ public class HubService : IHostedService
         Publisher.Dispose();
         Subscriber.Disconnect(_addressSubscriber);
         Subscriber.Close();
-        return Task.CompletedTask;
-    }
-
-    public Task Subscribe(string channel)
-    {
-        Subscriber.Subscribe(channel);
-        return Task.CompletedTask;
-    }
-
-    public Task UnSubscribe(string channel)
-    {
-        Subscriber.Unsubscribe(channel);
         return Task.CompletedTask;
     }
 
@@ -92,3 +76,5 @@ public class HubService : IHostedService
         DataReceived?.Invoke(sender, new DataReceivedEventArgs {Channel = channel, Key = key, Data = data});
     }
 }
+
+public record NetMqMessage(string Key, string? Data);
